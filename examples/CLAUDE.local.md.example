@@ -1,0 +1,3 @@
+# Personal, per-project session practices (keep out of version control)
+
+- **Dynamic model delegation**: for routine, low-complexity side work (log/file scanning, grepping, reading files, basic syntax checks) pass `model: "haiku"` on that subagent call. For complex analysis, debugging and non-trivial code changes pass `model: "sonnet"` (or `"opus"` when a wrong answer is costly). Never omit `model`: an omitted `model` falls back to `CLAUDE_CODE_SUBAGENT_MODEL=haiku` from settings.json. Delegate only side work that would flood the main context; a single targeted read or small edit stays in the main session, because a subagent starts with a cold cache. Never switch the main session model mid-task, since each model has its own prompt cache; pick it at session start.
