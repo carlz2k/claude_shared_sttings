@@ -10,11 +10,12 @@ Generic Claude Code preferences and subagent definitions, shared so they can be 
 | `RTK.md` | Note that command output is condensed and how to recover a truncated result. |
 | `agents/Explore.md` | Read-only codebase exploration on Haiku. Overrides the built-in `Explore`, which otherwise runs on Opus with a Claude subscription or Console account. |
 | `agents/analyst.md` | Deep analysis and root-cause work. Proposes fixes and does not apply them unless asked. Inherits the main model. |
+| `rules/tool-choice.md` | Global rule: read files once, re-read from disk when output is lossy-compressed, delegate to subagents only for context-flooding work. |
 | `agents/researcher.md` | Read-only research that must ground every claim in code or commands it ran. Runs on Sonnet. |
 
 ## Install
 
-Global preferences go in `~/.claude/`, and subagents in `~/.claude/agents/`:
+Global preferences go in `~/.claude/`, rules in `~/.claude/rules/`, and subagents in `~/.claude/agents/`:
 
 ```sh
 git clone https://github.com/carlz2k/claude_shared_sttings.git
@@ -22,6 +23,8 @@ cd claude_shared_sttings
 cp CLAUDE.md RTK.md ~/.claude/
 mkdir -p ~/.claude/agents
 cp agents/*.md ~/.claude/agents/
+mkdir -p ~/.claude/rules
+cp rules/*.md ~/.claude/rules/
 ```
 
 Back up any existing `~/.claude/CLAUDE.md` first, because `cp` overwrites it. `RTK.md` only makes sense if you use the RTK output filter. Otherwise delete the `@RTK.md` line from `CLAUDE.md`.
