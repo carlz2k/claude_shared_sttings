@@ -71,28 +71,49 @@ Notes:
 
 ## 5. Writing (only when the user asks)
 
-Writes are outward-facing, visible to others and hard to undo. Rules:
+Writes are visible to others and hard to undo. Follow the steps in order.
 
-1. Never create, edit, comment, transition or link unless the user asked for exactly that.
-2. Show the full draft (title, type, parent, body) and get an explicit go-ahead first. Approval for one write does not cover the next.
-3. Check for duplicates with a JQL search before creating.
-4. Keep the body short: bullets, concrete scope, "done when" criteria. No attribution lines unless the user asks.
-5. Write ticket text in plain, complete sentences. Do not use terse chat style.
-6. Report the key and URL of what was written.
+### 5.1 Before writing
 
-Commands:
+1. Write only what the user asked for. Approval for one write does not cover the next.
+2. Search for duplicates first (section 3). Try 2 or 3 phrasings. If a ticket already covers the work, propose updating it instead of creating a new one. Say which JQL you used.
+3. Read the parent epic and one sibling ticket. Match their conventions (type, priority names, labels, components) and check the new text does not contradict them or the epic's scope.
+4. Show the full draft (title, type, parent, priority, labels, links, body) and wait for an explicit go-ahead.
+
+### 5.2 Writing the ticket
+
+- **Title:** one line. Start with the area, then the outcome. No ticket keys or dates in the title.
+- **Body sections, in this order:** Why, Scope, Out of scope, Depends on, Done when. Skip a section only if it is empty.
+- **One fact, one place.** Do not restate the title in the body. Do not repeat a dependency in two sections. Do not copy text from the parent or linked tickets: link to it.
+- **Checkable "Done when".** Each item can be verified by someone else. Mark estimates, thresholds and unmeasured numbers as proposals or guesses.
+- **Plain prose bullets.** Short and complete sentences. No chat shorthand. No attribution lines unless the user asks.
+- **Facts from tickets or code:** cite the key or file. Say what you did not verify.
+
+### 5.3 Commands
 
 | Goal | Command |
 |---|---|
-| Create | `jira issue create -t Story -s "Title" -b "Body" -P EPIC-KEY -y High -l label --no-input` |
-| Body from file | `-T path/to/body.md` instead of `-b` |
+| Create | `jira issue create -p PROJ -t Story -s "Title" -T body.md -P EPIC-KEY -y<Priority> -l label -C Component -a "user" --no-input --raw` |
+| Inline body | `-b "Body"` instead of `-T body.md` |
 | Custom field | `--custom story-points=3` |
 | Comment | `jira issue comment add KEY "Text" --no-input` (add `--internal` for an internal note) |
 | Transition | `jira issue move KEY "Status"` |
-| Link | `jira issue link KEY1 KEY2 "Relates"` |
+| Link | `jira issue link FROM TO "Type"` |
+| Unlink | `jira issue unlink FROM TO` |
 | Assign | `jira issue assign KEY "user"` |
 
-Confirm flags with `jira <command> --help` before use. The CLI changes between versions.
+Notes:
+- Write long bodies to a file and pass `-T`. Put scratch files outside the repo.
+- `--raw` on create prints the new key as JSON.
+- A 400 such as `Components is required` names a field the project requires. Copy that field from a sibling ticket (`view SIBLING --raw`), then retry. Create does not retry on its own.
+- **Link direction:** `link FROM TO "Blocks"` means FROM blocks TO. Always verify the direction after linking (5.4). Fix a wrong link with `unlink`, then link again the right way round.
+- Confirm flags with `jira <command> --help` before use. The CLI changes between versions.
+
+### 5.4 After writing
+
+1. Read the ticket back: `jira issue view KEY --raw | jq '{key:.key,type:.fields.issuetype.name,prio:.fields.priority.name,parent:.fields.parent.key,assignee:.fields.assignee.displayName,labels:.fields.labels,components:[.fields.components[].name],links:[.fields.issuelinks[]|{type:.type.name,inward:.inwardIssue.key,outward:.outwardIssue.key}]}'`
+2. Check each field against the approved draft. For links, `inward` set on the new ticket means "is blocked by" the other ticket, and `outward` set means "blocks" it.
+3. Report the key, the URL and any field you had to add or change.
 
 ## 6. Failure checklist
 
