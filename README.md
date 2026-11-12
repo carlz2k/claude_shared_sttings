@@ -12,6 +12,7 @@ Generic Claude Code preferences and subagent definitions, shared so they can be 
 | `agents/analyst.md` | Deep analysis and root-cause work. Proposes fixes and does not apply them unless asked. Inherits the main model. |
 | `rules/tool-choice.md` | Global rule: read files once, re-read from disk when output is lossy-compressed, delegate to subagents only for context-flooding work. |
 | `agents/researcher.md` | Read-only research that must ground every claim in code or commands it ran. Runs on Sonnet. |
+| `skills/jira-cli/SKILL.md` | Skill for reading, searching and (only when asked) writing Jira tickets with `jira-cli`. Covers loading shell credentials, JQL pitfalls and safe write rules. |
 | `examples/settings.example.json` | Keys to merge into `~/.claude/settings.json`: `CLAUDE_CODE_SUBAGENT_MODEL=haiku`, default model, and the caveman and context-mode plugins. |
 | `examples/zshrc-headroom.sh` | Shell snippet: route `claude` through the Headroom proxy and protect `Read` results from lossy compression. |
 | `examples/CLAUDE.local.md.example` | Template for a per-project, untracked `CLAUDE.local.md` with the model-delegation rule. |
@@ -30,6 +31,8 @@ mkdir -p ~/.claude/agents
 cp agents/*.md ~/.claude/agents/
 mkdir -p ~/.claude/rules
 cp rules/*.md ~/.claude/rules/
+mkdir -p ~/.claude/skills
+cp -R skills/* ~/.claude/skills/
 ```
 
 Back up any existing `~/.claude/CLAUDE.md` first, because `cp` overwrites it. `RTK.md` only makes sense if you use the RTK output filter. Otherwise delete the `@RTK.md` line from `CLAUDE.md`.
