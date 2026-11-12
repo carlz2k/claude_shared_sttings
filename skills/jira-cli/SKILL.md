@@ -5,8 +5,7 @@ description: Read, search and (only when asked) write Jira tickets with the `jir
 
 # Jira via jira-cli
 
-Tool: `jira` (jira-cli, https://github.com/ankitpokhrel/jira-cli). Not Atlassian's `acli`. Run `jira init` once to create its config.
-
+Tool: `jira` (jira-cli, https://github.com/ankitpokhrel/jira-cli). Not Atlassian's `acli`.
 ## 1. Always run through a shell that loads the profile
 
 The Bash tool does not load `~/.zshrc`, so `JIRA_API_TOKEN` and related variables are missing. Without them the CLI does not say "not authenticated". It reports misleading results:
@@ -22,7 +21,12 @@ Use this wrapper for every call:
 zsh -c 'source ~/.zshrc >/dev/null 2>&1; jira <args>'
 ```
 
-Quote JQL with double quotes inside the single-quoted string and escape inner quotes with a backslash.
+Quote JQL with double quotes inside the single-quoted string and escape inner quotes with a backslash. Put pipes such as `| jq ...` or `| head` inside the same quoted string, or after it.
+
+Secrets:
+- Never print the token: no `env | grep JIRA`, no `echo $JIRA_API_TOKEN`, and do not `cat` the CLI config file. Use `--debug` only if you check its output for credentials first.
+- If sourcing the whole profile is slow or has side effects, export only the Jira variables in the wrapper instead.
+- `jira init` is interactive. Ask the user to run it (`! jira init`) instead of running it yourself.
 
 Before concluding "ticket not found", retry once through the wrapper. Then test a ticket you know exists. Check `jira me` first when unsure.
 
@@ -38,7 +42,8 @@ Add `| head -N` to bound output.
 | Specific fields from JSON | `jira issue view KEY --raw` piped to `jq '{key:.key, status:.fields.status.name, summary:.fields.summary}'` |
 | Search by JQL | `jira issue list -q"<jql>" --plain --columns key,status,priority,assignee,summary --paginate 0:50` |
 | Children of an epic or parent | `jira issue list -q"parent = KEY" --plain --columns key,status,summary` |
-| Epic view | `jira epic list KEY --plain` |
+| Epic children | `jira epic list KEY --plain` (compare with the `parent = KEY` search if the counts matter) |
+| Ordered search | add `--order-by key --reverse` (not `ORDER BY` in the JQL) |
 | Mine, open | `jira issue list -a$(jira me) -s"~Done" --plain` |
 | CSV for scripts | add `--csv`; no headers: `--plain --no-headers` |
 
@@ -94,7 +99,7 @@ Confirm flags with `jira <command> --help` before use. The CLI changes between v
 1. 404 or empty result: wrapper missing (section 1).
 2. 400 on JQL: `ORDER BY` inside `-q`, or an unquoted value (section 3).
 3. Interactive prompt hangs: add `--no-input` (writes) or `--plain` (reads).
-4. Output looks shortened: a hook may compress it. Re-run with `--raw` or `--no-truncate`, or write the output to a file and read that.
+4. Output looks shortened: a tool or hook in the environment may compress it. Re-run with `--raw` or `--no-truncate`, or write the output to a file and read that. Do not quote compressed text as exact.
 5. Still failing: `jira me`, then `--debug` on the failing command.
 
 ## 7. Extending this skill
