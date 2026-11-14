@@ -6,14 +6,15 @@ Generic Claude Code preferences and subagent definitions, shared so they can be 
 
 | Path | Purpose |
 |---|---|
-| `CLAUDE.md` | Global preferences: terse answers that lead with the result, with exact names, commands and code. Imports `RTK.md`. |
-| `RTK.md` | Note that command output is condensed and how to recover a truncated result. |
+| `CLAUDE.md` | Global preferences: terse answers that lead with the result, with exact names, commands and code, and a rule to load the `jira-cli` skill for Jira work. |
+| `RTK.md` | Optional note that command output is condensed and how to recover a truncated result. Not imported by `CLAUDE.md`; add an `@RTK.md` line if you use the RTK output filter. |
 | `agents/Explore.md` | Read-only codebase exploration on Haiku. Overrides the built-in `Explore`, which otherwise runs on Opus with a Claude subscription or Console account. |
 | `agents/analyst.md` | Deep analysis and root-cause work. Proposes fixes and does not apply them unless asked. Inherits the main model. |
 | `rules/tool-choice.md` | Global rule: read files once, re-read from disk when output is lossy-compressed, delegate to subagents only for context-flooding work. |
+| `rules/prefer-otb.md` | Global rule: prefer an off-the-shelf library or tool over hand-rolled code when it meets the requirement; reject it only after a test shows a real failure; required "OTB check" block for any hand-rolled component. |
 | `agents/researcher.md` | Read-only research that must ground every claim in code or commands it ran. Runs on Sonnet. |
 | `skills/jira-cli/SKILL.md` | Skill for reading, searching and (only when asked) writing Jira tickets with `jira-cli`. Covers loading shell credentials, JQL pitfalls and safe write rules. |
-| `examples/settings.example.json` | Keys to merge into `~/.claude/settings.json`: `CLAUDE_CODE_SUBAGENT_MODEL=haiku`, default model, and the caveman and context-mode plugins. |
+| `examples/settings.example.json` | Keys to merge into `~/.claude/settings.json`: `CLAUDE_CODE_SUBAGENT_MODEL=sonnet`, default model, and the caveman and context-mode plugins. |
 | `examples/zshrc-headroom.sh` | Shell snippet: route `claude` through the Headroom proxy and protect `Read` results from lossy compression. |
 | `examples/CLAUDE.local.md.example` | Template for a per-project, untracked `CLAUDE.local.md` with the model-delegation rule. |
 | `scripts/restart-headroom-proxy.sh` | Restart the shared Headroom proxy so a changed `HEADROOM_*` variable takes effect. Has `--dry-run`. |
@@ -35,7 +36,7 @@ mkdir -p ~/.claude/skills
 cp -R skills/* ~/.claude/skills/
 ```
 
-Back up any existing `~/.claude/CLAUDE.md` first, because `cp` overwrites it. `RTK.md` only makes sense if you use the RTK output filter. Otherwise delete the `@RTK.md` line from `CLAUDE.md`.
+Back up any existing `~/.claude/CLAUDE.md` first, because `cp` overwrites it. `RTK.md` only makes sense if you use the RTK output filter; add an `@RTK.md` line to `CLAUDE.md` to import it.
 
 ## Optimized stack (RTK, Headroom, context-mode, caveman)
 
@@ -49,7 +50,7 @@ Do these after the Install section, in order. `scripts/verify.sh` checks the res
 
 Notes:
 
-- `CLAUDE_CODE_SUBAGENT_MODEL=haiku` makes any subagent call that omits `model` run on Haiku. The rule in `rules/tool-choice.md` therefore says to always pass `model` explicitly, and to use `sonnet` for analysis.
+- `CLAUDE_CODE_SUBAGENT_MODEL=sonnet` makes any subagent call that omits `model` run on Sonnet. The rule in `rules/tool-choice.md` therefore says to always pass `model` explicitly, and to use `sonnet` for analysis.
 - With context-mode installed, `WebFetch` is hook-redirected to `ctx_fetch_and_index` plus `ctx_search`, and `ctx_search` is throttled. Batch questions into one `queries` array.
 - Caveman is stated in `CLAUDE.md` and also injected by the plugin's hooks. This is redundant but harmless.
 - `HEADROOM_PROTECT_TOOL_RESULTS` is not a live-syncable Headroom knob, so a proxy restart is the only way to apply it.
@@ -65,4 +66,4 @@ See the official docs: <https://code.claude.com/docs/en/sub-agents.md> and <http
 
 ## Not included
 
-Project-specific rules, settings and memory notes stay private.
+Project-specific rules, settings and memory notes stay private. So do agents and skills that are symlinks into an employer repository, scripts tied to one repository's build or CI, and work-process skills.
