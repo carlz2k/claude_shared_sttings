@@ -16,7 +16,7 @@ Generic Claude Code preferences and subagent definitions, shared so they can be 
 | `skills/jira-cli/SKILL.md` | Skill for reading, searching and (only when asked) writing Jira tickets with `jira-cli`. Covers loading shell credentials, JQL pitfalls and safe write rules. |
 | `examples/settings.example.json` | Keys to merge into `~/.claude/settings.json`: `CLAUDE_CODE_SUBAGENT_MODEL=sonnet`, default model, and the caveman and context-mode plugins. |
 | `examples/zshrc-headroom.sh` | Shell snippet: route `claude` through the Headroom proxy and protect `Read` results from lossy compression. |
-| `examples/CLAUDE.local.md.example` | Template for a per-project, untracked `CLAUDE.local.md` with the model-delegation rule. |
+| `examples/CLAUDE.local.md.example` | Template for a per-project, untracked `CLAUDE.local.md` with the model-delegation, propose-first and open-research (design from first principles) rules. |
 | `scripts/restart-headroom-proxy.sh` | Restart the shared Headroom proxy so a changed `HEADROOM_*` variable takes effect. Has `--dry-run`. |
 | `scripts/verify.sh` | Checks that the setup below is active on this machine. Exit code is the number of failed checks. |
 
