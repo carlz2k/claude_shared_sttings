@@ -7,7 +7,6 @@ Generic Claude Code preferences and subagent definitions, shared so they can be 
 | Path | Purpose |
 |---|---|
 | `CLAUDE.md` | Global preferences: terse answers that lead with the result, with exact names, commands and code, and a rule to load the `jira-cli` skill for Jira work. |
-| `RTK.md` | Optional note that command output is condensed and how to recover a truncated result. Not imported by `CLAUDE.md`; add an `@RTK.md` line if you use the RTK output filter. |
 | `agents/Explore.md` | Read-only codebase exploration on Haiku. Overrides the built-in `Explore`, which otherwise runs on Opus with a Claude subscription or Console account. |
 | `agents/analyst.md` | Deep analysis and root-cause work. Proposes fixes and does not apply them unless asked. Inherits the main model. |
 | `rules/tool-choice.md` | Global rule: read files once, re-read from disk when output is lossy-compressed, delegate to subagents only for context-flooding work. |
@@ -27,7 +26,7 @@ Global preferences go in `~/.claude/`, rules in `~/.claude/rules/`, and subagent
 ```sh
 git clone https://github.com/carlz2k/claude_shared_sttings.git
 cd claude_shared_sttings
-cp CLAUDE.md RTK.md ~/.claude/
+cp CLAUDE.md ~/.claude/
 mkdir -p ~/.claude/agents
 cp agents/*.md ~/.claude/agents/
 mkdir -p ~/.claude/rules
@@ -36,17 +35,15 @@ mkdir -p ~/.claude/skills
 cp -R skills/* ~/.claude/skills/
 ```
 
-Back up any existing `~/.claude/CLAUDE.md` first, because `cp` overwrites it. `RTK.md` only makes sense if you use the RTK output filter; add an `@RTK.md` line to `CLAUDE.md` to import it.
+Back up any existing `~/.claude/CLAUDE.md` first, because `cp` overwrites it.
 
-## Optimized stack (RTK, Headroom, context-mode, caveman)
+## Optimized stack (Headroom, context-mode, caveman)
 
 Do these after the Install section, in order. `scripts/verify.sh` checks the result.
 
-1. **Real ripgrep binary.** `brew install ripgrep` (or your package manager). Claude Code only defines `rg` as a shell function, so without a real binary on `PATH` the RTK hook rewrites `rg ...` to `rtk rg ...` and every call fails with `rtk: search failed: Failed to execute command: No such file or directory`. Plain `grep` is unaffected.
-2. **RTK.** Install RTK, then run `rtk init -g`. It adds the Bash `PreToolUse` and `SessionStart` hooks. The hook fires only on Bash: the built-in `Read`, `Grep` and `Glob` tools bypass it. Then delete the `SessionStart` `rtk hook claude` entry from `~/.claude/settings.json`. With Headroom on `ANTHROPIC_BASE_URL`, that entry tries to launch `rtk-proxy` (a separately licensed binary, not installed), and every session start prints a harmless "RTK proxy not answering" warning. Keep the `PreToolUse` entry. `rtk-proxy` is not needed: Headroom already does that job, and only one of them can own port 8787.
-3. **Headroom.** Install Headroom, add `examples/zshrc-headroom.sh` to `~/.zshrc`, and start a new shell. `HEADROOM_PROTECT_TOOL_RESULTS=Read` stops `Read` output being compressed into `[N words compressed to M ...]` with garbled headings. Headroom reads it only when the proxy starts, and `headroom wrap claude` reuses an already-running proxy, so after changing it run `scripts/restart-headroom-proxy.sh`. The restart drops the connection of every other session on that proxy for a few seconds.
-4. **Settings.** Merge `examples/settings.example.json` into `~/.claude/settings.json`. Do not overwrite the file: it also holds your hooks and permissions. Then install the `caveman` and `context-mode` plugins through `/plugin`.
-5. **Verify.** Run `scripts/verify.sh`. Then `Read` a file of 100+ lines and confirm there is no `words compressed` marker.
+1. **Headroom.** Install Headroom, add `examples/zshrc-headroom.sh` to `~/.zshrc`, and start a new shell. `HEADROOM_PROTECT_TOOL_RESULTS=Read` stops `Read` output being compressed into `[N words compressed to M ...]` with garbled headings. Headroom reads it only when the proxy starts, and `headroom wrap claude` reuses an already-running proxy, so after changing it run `scripts/restart-headroom-proxy.sh`. The restart drops the connection of every other session on that proxy for a few seconds.
+2. **Settings.** Merge `examples/settings.example.json` into `~/.claude/settings.json`. Do not overwrite the file: it also holds your hooks and permissions. Then install the `caveman` and `context-mode` plugins through `/plugin`.
+3. **Verify.** Run `scripts/verify.sh`. Then `Read` a file of 100+ lines and confirm there is no `words compressed` marker.
 
 Notes:
 
@@ -54,7 +51,8 @@ Notes:
 - With context-mode installed, `WebFetch` is hook-redirected to `ctx_fetch_and_index` plus `ctx_search`, and `ctx_search` is throttled. Batch questions into one `queries` array.
 - Caveman is stated in `CLAUDE.md` and also injected by the plugin's hooks. This is redundant but harmless.
 - `HEADROOM_PROTECT_TOOL_RESULTS` is not a live-syncable Headroom knob, so a proxy restart is the only way to apply it.
-- Versions this was verified on: RTK 1.0.1, Headroom 0.41.0, Claude Code 2.1.312, ripgrep 15.2.0, macOS.
+- RTK (a command-output filter that rewrites Bash commands to `rtk <cmd>`) is not part of this stack. Headroom 0.41.0 removed its own RTK integration and `headroom wrap` uninstalls leftover RTK hooks. Headroom already compresses Bash tool results at the proxy, with a recovery path for compressed content, so a second lossy filter in front of it is redundant. On the machine this was written on, RTK saved 0.84M tokens between 2026-10-25 and 2026-11-03, and Headroom saved 65.0M tokens in 30 days (`rtk gain`, `headroom savings`).
+- Versions this was verified on: Headroom 0.41.0, Claude Code 2.1.312, macOS.
 
 ## Model choice
 

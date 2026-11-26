@@ -9,7 +9,6 @@
   },
   "extraKnownMarketplaces": {
     "caveman": { "source": { "source": "github", "repo": "JuliusBrussee/caveman" } },
-    "context-mode": { "source": { "source": "github", "repo": "mksglu/context-mode" } },
-    "rtk": { "source": { "source": "github", "repo": "rtk-ai/rtk-gain-mod" } }
+    "context-mode": { "source": { "source": "github", "repo": "mksglu/context-mode" } }
   }
 }
